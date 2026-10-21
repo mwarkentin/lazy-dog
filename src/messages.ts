@@ -187,7 +187,7 @@ export function skipText(reason: SkipReason | undefined, cfg: Config): string {
       return `After removing template text, comments and code, the description is under ${cfg.minWords} words, which is too short to score reliably.`
     case 'disclosed':
       return 'The description discloses AI use, and this repository does not check disclosed descriptions.'
-    case 'no-api-key':
+    case 'no-pangram-key':
       return 'No Pangram API key was available to this run, so the description was not scored.'
     case 'not-scanned-on-event':
       return 'The description has not been scored yet; this repository only scans on some pull request events.'

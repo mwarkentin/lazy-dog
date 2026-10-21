@@ -141,7 +141,7 @@ outputs:
   skipped:
     description: true when no score is available (see skip-reason).
   skip-reason:
-    description: Why the PR wasn't scored, for example draft, bot, too-short, no-api-key or api-error.
+    description: Why the PR wasn't scored, for example draft, bot, too-short, no-pangram-key or api-error.
   fraction-ai:
     description: Pangram fraction_ai, 0-1.
   fraction-ai-assisted:

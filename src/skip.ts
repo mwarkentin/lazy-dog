@@ -25,7 +25,7 @@ export type SkipReason =
   | 'skip-author'
   | 'too-short'
   | 'disclosed'
-  | 'no-api-key'
+  | 'no-pangram-key'
   | 'bypass-label'
   | 'not-scanned-on-event'
   | 'below-heuristic-threshold'

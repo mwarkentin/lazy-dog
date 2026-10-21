@@ -62,6 +62,12 @@ describe('cleanBody', () => {
     expect(cleanBody(body).text).toBe('See the runbook and .\nFixes , and . Also and .')
   })
 
+  it('strips HTML tags, including nested ones that reassemble after one pass', () => {
+    expect(cleanBody('<details><summary>Why</summary>Because</details>').text).toBe('WhyBecause')
+    expect(cleanBody('<<script>script>alert(1)<</script>/script> done').text).toBe('alert(1) done')
+    expect(cleanBody('Latency must stay < 50ms').text).toBe('Latency must stay < 50ms')
+  })
+
   it('strips AI disclosure footers from the scored text', () => {
     const r = cleanBody(fixture('ai.md'))
     expect(r.text).not.toMatch(/Generated with/)

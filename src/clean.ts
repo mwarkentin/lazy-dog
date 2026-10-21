@@ -53,8 +53,9 @@ export function cleanBody(body: string, opts: CleanOptions = {}): CleanResult {
     .replace(/\[([^\]]+)\]\[[^\]]*\]/g, '$1')
     .replace(/^\s*\[[^\]]+\]:\s*\S+.*$/gm, '')
     .replace(/<(?:https?|mailto):[^>\s]+>/gi, '')
-    // HTML tags (keep their text), bare URLs, emoji shortcodes.
-    .replace(/<\/?[a-z][a-z0-9-]*(?:\s[^<>]*)?\/?>/gi, '')
+
+  // HTML tags (keep their text), bare URLs, emoji shortcodes.
+  text = stripTags(text)
     .replace(/\b(?:https?:\/\/|www\.)[^\s<>()[\]]*[^\s<>()[\].,:;!?'"]/gi, '')
     .replace(/:[a-z0-9_+-]+:/g, '')
     // Ticket IDs: OPS-123, owner/repo#123, #123.
@@ -81,6 +82,17 @@ export function cleanBody(body: string, opts: CleanOptions = {}): CleanResult {
     truncated: scored !== full,
     hash: hashText(scored)
   }
+}
+
+/** Remove HTML tags but keep their text, until none are left: <<b>b> must not leave <b>. */
+export function stripTags(text: string): string {
+  const tag = /<\/?[a-z][a-z0-9-]*(?:\s[^<>]*)?\/?>/gi
+  let previous: string
+  do {
+    previous = text
+    text = text.replace(tag, '')
+  } while (text !== previous)
+  return text
 }
 
 export function countWords(text: string): number {

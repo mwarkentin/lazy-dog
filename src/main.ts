@@ -206,7 +206,7 @@ async function evaluate(cfg: Config, deps: Deps): Promise<Evaluation> {
     log.warning(
       'pangram-api-key is empty (fork PRs get no secrets under pull_request); skipping the scan.'
     )
-    return skip('no-api-key')
+    return skip('no-pangram-key')
   }
   if (ev.bypassed && cfg.bypassLabelSkipScan) return skip('bypass-label')
   if (cfg.scanOn && !cfg.scanOn.includes(action)) {

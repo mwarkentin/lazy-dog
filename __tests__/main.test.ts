@@ -283,7 +283,7 @@ describe('run', () => {
 
   it('skips cleanly when the API key is missing (fork PRs)', async () => {
     const r = await act({ 'pangram-api-key': '', mode: 'fail' })
-    expect(r.outputs).toMatchObject({ skipped: 'true', 'skip-reason': 'no-api-key' })
+    expect(r.outputs).toMatchObject({ skipped: 'true', 'skip-reason': 'no-pangram-key' })
     expect(r.failures).toEqual([])
     expect(api.comments).toEqual([])
   })

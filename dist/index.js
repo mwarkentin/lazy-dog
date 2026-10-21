@@ -29420,9 +29420,9 @@ function cleanBody(body, opts = {}) {
         .replace(/\[([^\]]*)\]\([^)]*\)/g, '$1')
         .replace(/\[([^\]]+)\]\[[^\]]*\]/g, '$1')
         .replace(/^\s*\[[^\]]+\]:\s*\S+.*$/gm, '')
-        .replace(/<(?:https?|mailto):[^>\s]+>/gi, '')
-        // HTML tags (keep their text), bare URLs, emoji shortcodes.
-        .replace(/<\/?[a-z][a-z0-9-]*(?:\s[^<>]*)?\/?>/gi, '')
+        .replace(/<(?:https?|mailto):[^>\s]+>/gi, '');
+    // HTML tags (keep their text), bare URLs, emoji shortcodes.
+    text = stripTags(text)
         .replace(/\b(?:https?:\/\/|www\.)[^\s<>()[\]]*[^\s<>()[\].,:;!?'"]/gi, '')
         .replace(/:[a-z0-9_+-]+:/g, '')
         // Ticket IDs: OPS-123, owner/repo#123, #123.
@@ -29447,6 +29447,16 @@ function cleanBody(body, opts = {}) {
         truncated: scored !== full,
         hash: hashText(scored)
     };
+}
+/** Remove HTML tags but keep their text, until none are left: <<b>b> must not leave <b>. */
+function stripTags(text) {
+    const tag = /<\/?[a-z][a-z0-9-]*(?:\s[^<>]*)?\/?>/gi;
+    let previous;
+    do {
+        previous = text;
+        text = text.replace(tag, '');
+    } while (text !== previous);
+    return text;
 }
 function countWords(text) {
     let n = 0;
@@ -30053,7 +30063,7 @@ function skipText(reason, cfg) {
             return `After removing template text, comments and code, the description is under ${cfg.minWords} words, which is too short to score reliably.`;
         case 'disclosed':
             return 'The description discloses AI use, and this repository does not check disclosed descriptions.';
-        case 'no-api-key':
+        case 'no-pangram-key':
             return 'No Pangram API key was available to this run, so the description was not scored.';
         case 'not-scanned-on-event':
             return 'The description has not been scored yet; this repository only scans on some pull request events.';
@@ -30434,7 +30444,7 @@ async function evaluate(cfg, deps) {
     }
     if (!cfg.apiKey) {
         log.warning('pangram-api-key is empty (fork PRs get no secrets under pull_request); skipping the scan.');
-        return skip('no-api-key');
+        return skip('no-pangram-key');
     }
     if (ev.bypassed && cfg.bypassLabelSkipScan)
         return skip('bypass-label');
