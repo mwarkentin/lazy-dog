@@ -1,0 +1,28 @@
+# Warn-only rollout: report the score in a sticky comment and the job summary,
+# never fail the check. Copy to .github/workflows/ai-description-check.yml.
+name: AI description check
+
+on:
+  # pull_request_target runs the workflow from the base branch with access to
+  # secrets, which is what lets fork PRs be scored. That is safe only because
+  # this job never checks out or runs PR code: don't add actions/checkout.
+  pull_request_target:
+    types: [opened, edited, reopened, synchronize, ready_for_review, labeled, unlabeled]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+concurrency:
+  group: ai-description-check-${{ github.event.pull_request.number }}
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      # Pin to a full commit SHA, e.g. mwarkentin/lazy-dog@<sha> # v1.0.0
+      - uses: mwarkentin/lazy-dog@v1
+        with:
+          pangram-api-key: ${{ secrets.PANGRAM_API_KEY }}
+          mode: warn
