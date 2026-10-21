@@ -1,0 +1,174 @@
+name: Lazy Dog PR Description Check
+description: Score pull request descriptions with Pangram's AI-detection API plus cheap local heuristics, and report or fail above a threshold.
+author: Michael Warkentin
+branding:
+  icon: file-text
+  color: orange
+
+inputs:
+  pangram-api-key:
+    description: >
+      Pangram API key, from a repo or org secret. Needed to score. When it is
+      empty (fork PRs under pull_request get no secrets) the check skips
+      cleanly instead of failing.
+    required: false
+  github-token:
+    description: Token for reading the PR, its template and comments, and writing the sticky comment.
+    required: false
+    default: ${{ github.token }}
+  model:
+    description: Pangram model selector, passed straight to /task. Pin it so scores don't drift silently.
+    required: false
+    default: pangram-4
+  metric:
+    description: 'Score to compare with the threshold: fraction_ai, fraction_ai_assisted, or max (the larger of the two).'
+    required: false
+    default: fraction_ai
+  threshold:
+    description: Flag when the metric is above this value, 0-1 (or a percentage such as 50%).
+    required: false
+    default: '0.5'
+  mode:
+    description: warn (always pass, just report) or fail (fail the check when flagged).
+    required: false
+    default: warn
+  min-words:
+    description: Skip descriptions with fewer words than this after cleaning. Pangram's minimum reliable input is 50 words.
+    required: false
+    default: '50'
+  max-words:
+    description: Truncate the cleaned description to this many words before scoring, to cap cost.
+    required: false
+    default: '2000'
+  strip-template:
+    description: Remove lines that match the repo's pull request template (read from the base branch).
+    required: false
+    default: 'true'
+  strip-patterns:
+    description: Extra regular expressions to delete before scoring, one per line. /source/flags syntax is accepted.
+    required: false
+    default: ''
+  skip-bots:
+    description: Skip PRs whose author is a bot (user type Bot or a login ending in [bot]).
+    required: false
+    default: 'true'
+  skip-authors:
+    description: Comma- or newline-separated logins to skip.
+    required: false
+    default: ''
+  skip-label:
+    description: Bypass label. While it is on the PR the check passes; the score is still reported.
+    required: false
+    default: skip-ai-check
+  bypass-label-skip-scan:
+    description: When the bypass label is on and there is no cached score, skip the Pangram call entirely.
+    required: false
+    default: 'false'
+  skip-if-disclosed:
+    description: Skip descriptions that disclose AI use (for example a "Generated with Claude Code" footer).
+    required: false
+    default: 'false'
+  comment:
+    description: >
+      Sticky PR comment, edited in place: true (every scored PR), on-flag
+      (only once a PR is flagged; then kept up to date), or false.
+    required: false
+    default: 'true'
+  fail-on-error:
+    description: Whether Pangram API or infrastructure errors fail the check.
+    required: false
+    default: 'false'
+  timeout-seconds:
+    description: Total time budget for submitting and polling the Pangram task.
+    required: false
+    default: '60'
+  heuristics:
+    description: >
+      off (Pangram only), signal (show heuristic signals next to the score;
+      only Pangram can fail the check), or gate (call Pangram only when the
+      heuristic score reaches heuristic-threshold).
+    required: false
+    default: signal
+  heuristic-threshold:
+    description: Heuristic score (0-1) at which gate mode calls Pangram.
+    required: false
+    default: '0.25'
+  scan-on:
+    description: >
+      Comma-separated PR event types that may call Pangram, for example
+      opened,ready_for_review for one scan per PR. Empty means every event.
+      Other events reuse the last score.
+    required: false
+    default: ''
+  policy-url:
+    description: Link to your policy; rendered as "Why we check" in the default failure message.
+    required: false
+    default: ''
+  help-url:
+    description: Where to send questions and false-positive reports. Defaults to this action's README.
+    required: false
+    default: ''
+  failure-message:
+    description: Markdown template for the flagged comment, replacing the default. See the README for placeholders.
+    required: false
+    default: ''
+  failure-message-file:
+    description: Path to a failure template in the base repo, read from the base branch (never the PR head).
+    required: false
+    default: ''
+  message-header:
+    description: Markdown placed above every comment.
+    required: false
+    default: ''
+  message-footer:
+    description: Markdown placed below every comment.
+    required: false
+    default: ''
+  pass-message:
+    description: Markdown template for the passed comment.
+    required: false
+    default: ''
+  bypass-message:
+    description: Markdown template for the bypassed comment.
+    required: false
+    default: ''
+  pangram-api-url:
+    description: Pangram API base URL. Override only for testing.
+    required: false
+    default: https://text.external-api.pangram.com
+
+outputs:
+  skipped:
+    description: true when no score is available (see skip-reason).
+  skip-reason:
+    description: Why the PR wasn't scored, for example draft, bot, too-short, no-pangram-key or api-error.
+  fraction-ai:
+    description: Pangram fraction_ai, 0-1.
+  fraction-ai-assisted:
+    description: Pangram fraction_ai_assisted, 0-1.
+  fraction-human:
+    description: Pangram fraction_human, 0-1.
+  prediction:
+    description: Pangram prediction_short (AI, Human or Mixed).
+  word-count:
+    description: Words sent to Pangram (after cleaning and truncation).
+  model-version:
+    description: Pangram model version that produced the score, for example 4.0.
+  verdict:
+    description: pass or flag, from the metric and threshold; empty when skipped. A bypassed PR keeps its verdict.
+  bypassed:
+    description: true when the bypass label is on the PR.
+  bypassed-by:
+    description: Login of whoever added the bypass label, when known.
+  heuristic-score:
+    description: Combined heuristic score, 0-1; empty when heuristics are off.
+  disclosed:
+    description: true when the description discloses AI use.
+  cached:
+    description: true when the score came from the sticky comment's cache instead of a new Pangram call.
+  comment-url:
+    description: URL of the sticky comment, if there is one.
+
+runs:
+  using: node24
+  main: dist/index.js

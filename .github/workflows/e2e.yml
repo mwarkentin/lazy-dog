@@ -1,0 +1,32 @@
+# Runs this action from the PR's own code on this repo's PRs, with a real key.
+# It uses pull_request (not pull_request_target) because it checks out and runs
+# PR code: fork PRs get no secrets here, so the action skips cleanly for them.
+name: E2E
+
+on:
+  pull_request:
+    types: [opened, edited, reopened, synchronize, ready_for_review, labeled, unlabeled]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+concurrency:
+  group: e2e-${{ github.event.pull_request.number }}
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - id: check
+        uses: ./
+        with:
+          pangram-api-key: ${{ secrets.PANGRAM_API_KEY }}
+          mode: warn
+      - name: Show outputs
+        env:
+          OUTPUTS: ${{ toJSON(steps.check.outputs) }}
+        run: echo "$OUTPUTS"

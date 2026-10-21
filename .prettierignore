@@ -1,0 +1,7 @@
+dist/
+node_modules/
+coverage/
+templates/
+__tests__/golden/
+__tests__/fixtures/
+package-lock.json
